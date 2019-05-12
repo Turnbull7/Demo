@@ -44,7 +44,7 @@ App = {
   listenForEvents: function() {
     App.contracts.Election.deployed().then(function(instance) {
       instance.votedEvent({}, {
-        fromBlock: 0,
+        fromBlock: 'latest',
         toBlock: 'latest'
       }).watch(function(error, event) {
         console.log("event triggered", event)

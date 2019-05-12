@@ -28,7 +28,7 @@ contract Election {
     // Store Candidates
     // Fetch Candidate
     mapping(uint => Candidate) public candidates;
-    
+
     // Store Candidates Count
     uint public candidatesCount;
 
@@ -43,30 +43,29 @@ contract Election {
         addCandidate("Renett Clough");
         addCandidate("Brian McNeil");
         addCandidate("Guillaume Meyer");
-        
+
         addPosition("Faith Based Representative");
         addCandidate("John M. Culpepper Jr.");
-        
+
         addPosition("Parliamentarian");
         addCandidate("Kimmarie Johnson-Roussell");
-        
+
         addPosition("Secretary");
         addCandidate("Tara Perry");
-        
+
         addPosition("Vice President");
         addCandidate("Velma Vernice Stevens");
         addCandidate("Jessica Chow");
-        
+
         addPosition("View Heights Resident Representative");
         addCandidate("Derrick Solomon");
         addCandidate("Carol Derby-David");
         addCandidate("Renee M. Dixon");
-        
+
         addPosition("Youth/Educational Representative");
         addCandidate("Allan Caldwell");
         addCandidate("Audre Lopez King");
         addCandidate("Tiffany C. Zachery");
-        
     }
 
     function addCandidate (string memory _name) private {
@@ -81,17 +80,17 @@ contract Election {
 
     function vote (uint[] memory _candidateIds) public {
         // require that they haven't voted before
-        require(!voters[msg.sender]);
+        require(!voters[msg.sender], "Sender already voted");
 
         uint[] memory positionVoted = new uint[](positionsCount + 1);
 
         for (uint i = 0; i < _candidateIds.length; i++) {
 
             // require each candidate has a valid id
-            require(_candidateIds[i] > 0 && _candidateIds[i] <= candidatesCount);
+            require(_candidateIds[i] > 0 && _candidateIds[i] <= candidatesCount, "Invalid Candidate ID");
 
             // require only on candidate per position is selected
-            require(positionVoted[candidates[_candidateIds[i]].position] != 1);
+            require(positionVoted[candidates[_candidateIds[i]].position] != 1, "Only one vote allowed per position");
             //require(inArray(positionVoted, candidates[_candidateIds[i]].position));
 
             positionVoted[candidates[_candidateIds[i]].position] = 1;
