@@ -112,7 +112,7 @@ App = {
             '<thead>' + 
               '<tr>' +
                 '<th scope="col" width="10%">#</th>' +
-                '<th scope="col" width="20%" class="radioSelection">Selection</th>' +
+                '<th class="voting-col" scope="col" width="20%" style="display:none">Selection</th>' +
                 '<th scope="col" width="60%">Name</th>' +
                 '<th class="votes-col" scope="col" width="10%" style="display:none">Votes</th>' +
               '</tr>' +
@@ -136,7 +136,7 @@ App = {
           var voteCount = candidate[3];
           var rowData = '<tr>' +
           '<th scope="row">' + id + '</th>' +
-          '<td><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
+          '<td class="voting-col" style="display:none"><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
           '<td>' + name + '</td>' +
           '<td class="votes-col" style="display:none">' + voteCount + '</td>' +
           '</tr>';
@@ -188,11 +188,14 @@ App = {
       return electionInstance.voters(App.account);
     }).then(function(hasVoted) {
       // Do not allow a user to vote
-      if(hasVoted) {
+      if (hasVoted) {
         $('.votes-col').show();
+        $('.voting-col').hide();
         $('form button').hide();
-        $('input[type=radio').hide();
-        $('.radioSelection').html('');
+      } else {
+        $('.votes-col').hide();
+        $('.voting-col').show();
+        $('form button').show();
       }
       loader.hide();
       content.show();
