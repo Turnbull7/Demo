@@ -8,14 +8,16 @@ App = {
     return App.initWeb3();
   },
 
-  initWeb3: function() {
+  initWeb3: async function() {
     if (ethereum) {
       web3 = new Web3(ethereum);
+      App.web3Provider = web3.currentProvider;
       try {
-        ethereum.enable();
-        App.web3Provider = web3.currentProvider;
+        let accounts = await ethereum.enable();
+        App.account = accounts[0];
       } catch (error) {
         console.warn(error);
+        console.warn("User likely rejected provider access");
       }
     } else if (web3) {
       App.web3Provider = web3.currentProvider;
@@ -35,9 +37,20 @@ App = {
       App.contracts.Election.setProvider(App.web3Provider);
 
       App.listenForEvents();
+      App.listenForAccountChange();
 
       return App.render();
     });
+  },
+
+  listenForAccountChange: function() {
+    if (ethereum) {
+      ethereum.on('accountsChanged', function (accounts) {
+        console.log('Account changed');
+        App.account = accounts[0];
+        App.render();
+      })
+    }
   },
 
   // Listen for events emitted from the contract
@@ -65,10 +78,11 @@ App = {
     content.hide();
 
     // Load account data
-    web3.eth.getAccounts(function(err, accounts) {
+    /*web3.eth.getAccounts(function(err, accounts) {
       App.account = accounts[0];
       $("#accountAddress").html("Your Account: " + App.account);
-    });
+    });*/
+    $("#accountAddress").html("Your Account: " + App.account);
 
     // Load contract data
     App.contracts.Election.deployed().then(function(instance) {
@@ -80,8 +94,59 @@ App = {
     }).then(function(positionsCount) {
       numPositions = positionsCount;
       var tables = $("#tables");
-      tables.empty();
+      //tables.empty();
+      
+      const positionsPromises = [];
       for (var i = 1; i <= numPositions; i++) {
+        positionsPromises.push(electionInstance.positions(i));
+      }
+
+      Promise.all(positionsPromises).then((positions) => {
+        var tables = $("#tables");
+        tables.empty();
+        positions.forEach(position => {
+          var id = position[0];
+          var name = position[1];
+          var tableData = '<h2>' + name + '</h2>' + 
+          '<table class="table table-striped">' +
+            '<thead>' + 
+              '<tr>' +
+                '<th scope="col" width="10%">#</th>' +
+                '<th scope="col" width="20%" class="radioSelection">Selection</th>' +
+                '<th scope="col" width="60%">Name</th>' +
+                '<th class="votes-col" scope="col" width="10%" style="display:none">Votes</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody id="table-' + id + '"></tbody>' +
+          '</table>';
+          tables.append(tableData);
+        });
+      });
+
+      const candidatesPromises = [];
+      for (var i = 1; i <= numCandidates; i++) {
+        candidatesPromises.push(electionInstance.candidates(i));
+      }
+
+      Promise.all(candidatesPromises).then((candidates) => {
+        candidates.forEach(candidate => {
+          var id = candidate[0];
+          var position = candidate[1];
+          var name = candidate[2];
+          var voteCount = candidate[3];
+          var rowData = '<tr>' +
+          '<th scope="row">' + id + '</th>' +
+          '<td><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
+          '<td>' + name + '</td>' +
+          '<td class="votes-col" style="display:none">' + voteCount + '</td>' +
+          '</tr>';
+          $('#table-' + position).append(rowData);
+        })
+      });
+
+
+
+      /*for (var i = 1; i <= numPositions; i++) {
         electionInstance.positions(i).then(function(position) {
           var id = position[0];
           var name = position[1];
@@ -99,9 +164,9 @@ App = {
           '</table>';
           tables.append(tableData);
         });
-      }
+      }*/
 
-      for (var i = 1; i <= numCandidates; i++) {
+      /*for (var i = 1; i <= numCandidates; i++) {
         electionInstance.candidates(i).then(function(candidate) {
           var id = candidate[0];
           var position = candidate[1];
@@ -115,7 +180,7 @@ App = {
           '</tr>';
           $('#table-' + position).append(rowData);
         });
-      }
+      }*/
       //$('.votes-col').hide();
       loader.hide();
       content.show();
