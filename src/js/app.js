@@ -92,7 +92,7 @@ App = {
                 '<th scope="col" width="10%">#</th>' +
                 '<th scope="col" width="20%" class="radioSelection">Selection</th>' +
                 '<th scope="col" width="60%">Name</th>' +
-                '<th scope="col" width="10%">Votes</th>' +
+                '<th class="votes-col" scope="col" width="10%" style="display:none">Votes</th>' +
               '</tr>' +
             '</thead>' +
             '<tbody id="table-' + id + '"></tbody>' +
@@ -111,12 +111,12 @@ App = {
           '<th scope="row">' + id + '</th>' +
           '<td><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
           '<td>' + name + '</td>' +
-          '<td>' + voteCount + '</td>' +
+          '<td class="votes-col" style="display:none">' + voteCount + '</td>' +
           '</tr>';
           $('#table-' + position).append(rowData);
         });
       }
-
+      //$('.votes-col').hide();
       loader.hide();
       content.show();
 
@@ -124,6 +124,7 @@ App = {
     }).then(function(hasVoted) {
       // Do not allow a user to vote
       if(hasVoted) {
+        $('.votes-col').show();
         $('form button').hide();
         $('input[type=radio').hide();
         $('.radioSelection').html('');
