@@ -33,6 +33,7 @@ App = {
     $.getJSON("Election.json", function(election) {
       // Instantiate a new truffle contract from the artifact
       App.contracts.Election = TruffleContract(election);
+      
       // Connect provider to interact with contract
       App.contracts.Election.setProvider(App.web3Provider);
 
@@ -69,6 +70,7 @@ App = {
 
   render: function() {
     var electionInstance;
+    var electionAddress;
     var numCandidates = 0;
     var numPositions = 0;
     var loader = $("#loader");
@@ -87,6 +89,9 @@ App = {
     // Load contract data
     App.contracts.Election.deployed().then(function(instance) {
       electionInstance = instance;
+      return electionInstance.address;
+    }).then(function(address) { 
+      electionAddress = address;
       return electionInstance.candidatesCount();
     }).then(function(candidatesCount) {
       numCandidates = candidatesCount;
@@ -94,7 +99,6 @@ App = {
     }).then(function(positionsCount) {
       numPositions = positionsCount;
       var tables = $("#tables");
-      //tables.empty();
       
       const positionsPromises = [];
       for (var i = 1; i <= numPositions; i++) {
@@ -112,6 +116,7 @@ App = {
             '<thead>' + 
               '<tr>' +
                 '<th scope="col" width="10%">#</th>' +
+                '<th class="selections-col" scope="col" width="10%">Selections</th>' +
                 '<th class="voting-col" scope="col" width="20%" style="display:none">Selection</th>' +
                 '<th scope="col" width="60%">Name</th>' +
                 '<th class="votes-col" scope="col" width="10%" style="display:none">Votes</th>' +
@@ -136,6 +141,7 @@ App = {
           var voteCount = candidate[3];
           var rowData = '<tr>' +
           '<th scope="row">' + id + '</th>' +
+          '<td class="selections-col" id="select-' + id + '"></td>' +
           '<td class="voting-col" style="display:none"><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
           '<td>' + name + '</td>' +
           '<td class="votes-col" style="display:none">' + voteCount + '</td>' +
@@ -143,56 +149,25 @@ App = {
           $('#table-' + position).append(rowData);
         })
       });
-
-
-
-      /*for (var i = 1; i <= numPositions; i++) {
-        electionInstance.positions(i).then(function(position) {
-          var id = position[0];
-          var name = position[1];
-          var tableData = '<h2>' + name + '</h2>' + 
-          '<table class="table table-striped">' +
-            '<thead>' + 
-              '<tr>' +
-                '<th scope="col" width="10%">#</th>' +
-                '<th scope="col" width="20%" class="radioSelection">Selection</th>' +
-                '<th scope="col" width="60%">Name</th>' +
-                '<th class="votes-col" scope="col" width="10%" style="display:none">Votes</th>' +
-              '</tr>' +
-            '</thead>' +
-            '<tbody id="table-' + id + '"></tbody>' +
-          '</table>';
-          tables.append(tableData);
-        });
-      }*/
-
-      /*for (var i = 1; i <= numCandidates; i++) {
-        electionInstance.candidates(i).then(function(candidate) {
-          var id = candidate[0];
-          var position = candidate[1];
-          var name = candidate[2];
-          var voteCount = candidate[3];
-          var rowData = '<tr>' +
-          '<th scope="row">' + id + '</th>' +
-          '<td><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
-          '<td>' + name + '</td>' +
-          '<td class="votes-col" style="display:none">' + voteCount + '</td>' +
-          '</tr>';
-          $('#table-' + position).append(rowData);
-        });
-      }*/
-      //$('.votes-col').hide();
       loader.hide();
       content.show();
 
-      return electionInstance.voters(App.account);
-    }).then(function(hasVoted) {
+      //return electionInstance.voters(App.account);
+      return electionInstance.getVotersLength();
+    }).then(function(votes) {
       // Do not allow a user to vote
-      if (hasVoted) {
+      if (votes > 0) {
+        for (var i = 0; i < votes; i++) {
+          electionInstance.getVotersVote(i).then(candidateId => {
+            $('#select-' + candidateId).html('✅');
+          });
+        }
+        $('.selections-col').show();
         $('.votes-col').show();
         $('.voting-col').hide();
         $('form button').hide();
       } else {
+        $('.selections-col').hide();
         $('.votes-col').hide();
         $('.voting-col').show();
         $('form button').show();

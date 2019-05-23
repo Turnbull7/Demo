@@ -16,7 +16,7 @@ contract Election {
     }
 
     // Store accounts that have voted
-    mapping(address => bool) public voters;
+    mapping(address => uint[]) public voters;
 
     // Store Positions
     // Fetch Positions
@@ -68,6 +68,14 @@ contract Election {
         addCandidate("Tiffany C. Zachery");
     }
 
+    function getVotersLength() public view returns (uint) {
+        return voters[msg.sender].length;
+    }
+
+    function getVotersVote(uint index) public view returns (uint) {
+        return voters[msg.sender][index];
+    }
+
     function addCandidate (string memory _name) private {
         candidatesCount ++;
         candidates[candidatesCount] = Candidate(candidatesCount, positionsCount, _name, 0);
@@ -80,7 +88,7 @@ contract Election {
 
     function vote (uint[] memory _candidateIds) public {
         // require that they haven't voted before
-        require(!voters[msg.sender], "Sender already voted");
+        require(getVotersLength() == 0, "Sender already voted");
 
         uint[] memory positionVoted = new uint[](positionsCount + 1);
 
@@ -96,12 +104,10 @@ contract Election {
             positionVoted[candidates[_candidateIds[i]].position] = 1;
         }
 
-        // record that voter has voted
-        voters[msg.sender] = true;
-
         // update candidate vote Count
         for (uint i = 0; i < _candidateIds.length; i++) {
             candidates[_candidateIds[i]].voteCount++;
+            voters[msg.sender].push(_candidateIds[i]);
         }
 
         // trigger voted event
