@@ -18,7 +18,7 @@
   },
   "author": "",
   "license": "ISC",
-  "homepage": "https://demo.truevote.org",
+  "homepage": "https://demo.truvote.org",
   "devDependencies": {
     "dotenv": "^8.0.0",
     "gh-pages": "^2.0.1",
