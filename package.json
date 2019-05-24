@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "lite-server",
+    "build": "cp -R ./src/* ./build/",
+    "deploy": "gh-pages -d build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,8 +18,10 @@
   },
   "author": "",
   "license": "ISC",
+  "homepage": "http://turnbull7.github.io/Demo/",
   "devDependencies": {
     "dotenv": "^8.0.0",
+    "gh-pages": "^2.0.1",
     "lite-server": "^2.3.0",
     "truffle-hdwallet-provider": "^1.0.9"
   }
