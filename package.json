@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "lite-server",
-    "build": "cp -R ./src/* ./build/",
-    "deploy": "gh-pages -d build",
+    "build": "cp -R ./src/* ./dist/ && cp ./build/contracts/* ./dist/",
+    "deploy": "gh-pages -d dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
