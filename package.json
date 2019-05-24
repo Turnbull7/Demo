@@ -18,7 +18,7 @@
   },
   "author": "",
   "license": "ISC",
-  "homepage": "http://turnbull7.github.io/Demo/",
+  "homepage": "https://demo.truevote.org",
   "devDependencies": {
     "dotenv": "^8.0.0",
     "gh-pages": "^2.0.1",
