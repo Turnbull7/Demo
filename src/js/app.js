@@ -31,10 +31,7 @@ App = {
 
   initContract: function() {
     $.getJSON("Election.json", function(election) {
-      // Instantiate a new truffle contract from the artifact
       App.contracts.Election = TruffleContract(election);
-      
-      // Connect provider to interact with contract
       App.contracts.Election.setProvider(App.web3Provider);
 
       App.listenForEvents();
@@ -54,15 +51,13 @@ App = {
     }
   },
 
-  // Listen for events emitted from the contract
   listenForEvents: function() {
     App.contracts.Election.deployed().then(function(instance) {
       instance.votedEvent({}, {
         fromBlock: 'latest',
         toBlock: 'latest'
       }).watch(function(error, event) {
-        console.log("event triggered", event)
-        // Reload when a new vote is recorded
+        console.log("event triggered", event);
         App.render();
       });
     });
@@ -79,14 +74,8 @@ App = {
     loader.show();
     content.hide();
 
-    // Load account data
-    /*web3.eth.getAccounts(function(err, accounts) {
-      App.account = accounts[0];
-      $("#accountAddress").html("Your Account: " + App.account);
-    });*/
     $("#accountAddress").html("Your Account: " + App.account);
 
-    // Load contract data
     App.contracts.Election.deployed().then(function(instance) {
       electionInstance = instance;
       return electionInstance.address;
@@ -105,19 +94,26 @@ App = {
         positionsPromises.push(electionInstance.positions(i));
       }
 
-      Promise.all(positionsPromises).then((positions) => {
+      const candidatesPromises = [];
+      for (var i = 1; i <= numCandidates; i++) {
+        candidatesPromises.push(electionInstance.candidates(i));
+      }
+
+      const votesPromise = electionInstance.getVotersLength();
+
+      Promise.all(positionsPromises).then(positions => {
         var tables = $("#tables");
         tables.empty();
         positions.forEach(position => {
           var id = position[0];
           var name = position[1];
           var tableData = '<h2>' + name + '</h2>' + 
-          '<table class="table table-striped">' +
+          '<table class="table">' +
             '<thead>' + 
               '<tr>' +
                 '<th scope="col" width="10%">#</th>' +
-                '<th class="selections-col" scope="col" width="10%">Selections</th>' +
-                '<th class="voting-col" scope="col" width="20%" style="display:none">Selection</th>' +
+                '<th class="selections-col" scope="col" width="20%" style="display:none">Selection</th>' +
+                '<th class="voting-col" scope="col" width="20%">Selection</th>' +
                 '<th scope="col" width="60%">Name</th>' +
                 '<th class="votes-col" scope="col" width="10%" style="display:none">Votes</th>' +
               '</tr>' +
@@ -126,54 +122,51 @@ App = {
           '</table>';
           tables.append(tableData);
         });
-      });
-
-      const candidatesPromises = [];
-      for (var i = 1; i <= numCandidates; i++) {
-        candidatesPromises.push(electionInstance.candidates(i));
-      }
-
-      Promise.all(candidatesPromises).then((candidates) => {
-        candidates.forEach(candidate => {
-          var id = candidate[0];
-          var position = candidate[1];
-          var name = candidate[2];
-          var voteCount = candidate[3];
-          var rowData = '<tr>' +
-          '<th scope="row">' + id + '</th>' +
-          '<td class="selections-col" id="select-' + id + '"></td>' +
-          '<td class="voting-col" style="display:none"><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
-          '<td>' + name + '</td>' +
-          '<td class="votes-col" style="display:none">' + voteCount + '</td>' +
-          '</tr>';
-          $('#table-' + position).append(rowData);
-        })
-      });
-      loader.hide();
-      content.show();
-
-      //return electionInstance.voters(App.account);
-      return electionInstance.getVotersLength();
-    }).then(function(votes) {
-      // Do not allow a user to vote
-      if (votes > 0) {
-        for (var i = 0; i < votes; i++) {
-          electionInstance.getVotersVote(i).then(candidateId => {
-            $('#select-' + candidateId).html('✅');
+      }).then(function() {
+        Promise.all(candidatesPromises).then(candidates => {
+          candidates.forEach(candidate => {
+            var id = candidate[0];
+            var position = candidate[1];
+            var name = candidate[2];
+            var voteCount = candidate[3];
+            var rowData = '<tr>' +
+            '<th scope="row">' + id + '</th>' +
+            '<td class="selections-col" id="select-' + id + '" style="display:none">&nbsp;</td>' +
+            '<td class="voting-col"><input type="radio" name="position-' + position + '" value="' + id + '"></td>' +
+            '<td>' + name + '</td>' +
+            '<td class="votes-col" style="display:none">' + voteCount + '&nbsp;</td>' +
+            '</tr>';
+            $('#table-' + position).append(rowData);
           });
-        }
-        $('.selections-col').show();
-        $('.votes-col').show();
-        $('.voting-col').hide();
-        $('form button').hide();
-      } else {
-        $('.selections-col').hide();
-        $('.votes-col').hide();
-        $('.voting-col').show();
-        $('form button').show();
-      }
-      loader.hide();
-      content.show();
+        })
+      }).then(function() {
+        votesPromise.then(numVotes => {
+          if (numVotes > 0) {
+            const selectionsPromises = [];
+            for (var i = 0; i < numVotes; i++) {
+              selectionsPromises.push(electionInstance.getVotersVote(i));
+            }
+    
+            Promise.all(selectionsPromises).then(candidateIds => {
+              candidateIds.forEach(candidateId => {
+                $('#select-' + candidateId).html('✅');
+              });
+              $('.voting-col').hide();
+              $('.selections-col').show();
+              $('.votes-col').show();
+              loader.hide();
+              content.show();
+            });
+            
+          } else {
+            //$('.voting-col').show();
+            $('form button').show();
+            loader.hide();
+            content.show();
+          }
+        });
+      })
+      //return electionInstance.getVotersLength();
     }).catch(function(error) {
       console.warn(error);
     });

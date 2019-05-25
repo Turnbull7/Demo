@@ -1,0 +1,27 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+body {
+    
+    font-family: 'Montserrat', sans-serif;
+}
+.header {
+    background-color: #2a2c5d;
+    color: white;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+a, a:link, a:visited {
+    color: #6ec9c5;
+}
+a:hover, a:active {
+    color: #584a9b;
+}
+.logo {
+    max-width: 160px;
+}
+#loader {
+    margin-top: 100px;
+}
